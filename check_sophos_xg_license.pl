@@ -329,9 +329,11 @@ sub check_license
                 $SubscriptionStatusType{$status},
                 ($status_state == OK) ? '' : '<--'
             ),
-            '- Expire on ' . $expire_date,
+            sprintf(
+                '- Expire on %s'
+                $expire_date,
+            )
         )
-
     );
     if (defined($days_left)) {
         push(
