@@ -6,7 +6,7 @@ A collection of monitoring plugins to check [Sophos](https://www.sophos.com/) XG
 Compatible devices
 ------------------
 
-- Sophos](https://www.sophos.com/) XG firewalls 19
+- [Sophos](https://www.sophos.com/) XG firewalls 19
 
 
 Requirements
@@ -31,6 +31,10 @@ Requirements
 Plugins
 -------
 
+### check_sophos_xg_disk.pl
+
+Check disk space.
+
 ### check_sophos_xg_info.pl
 
 Just some details about the device.
@@ -38,6 +42,10 @@ Just some details about the device.
 ### check_sophos_xg_license.pl
 
 Check if a license has been expired or will expire soon.
+
+### check_sophos_xg_memory.pl
+
+Check memory and swap space.
 
 Installation
 ------------
