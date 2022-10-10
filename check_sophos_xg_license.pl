@@ -4,7 +4,6 @@
 
 use strict;
 use warnings FATAL => 'all';
-use Data::Dumper;
 
 use Pod::Text::Termcap;
 
@@ -330,8 +329,8 @@ sub check_license
                 ($status_state == OK) ? '' : '<--'
             ),
             sprintf(
-                '- Expire on %s'
-                $expire_date,
+                '- Expire on %s',
+                $expire_date
             )
         )
     );
@@ -377,7 +376,7 @@ sub parse_expire_date
         'Feb' => 2,
         'Mar' => 3,
         'Apr' => 4,
-        'Mai' => 5,
+        'May' => 5,
         'Jun' => 6,
         'Jul' => 7,
         'Aug' => 8,
