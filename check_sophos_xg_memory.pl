@@ -50,7 +50,7 @@ $parser->output_string(\$extra_doc_output);
 $parser->parse_string_document($extra_doc);
 
 my $mp = Monitoring::Plugin->new(
-    shortname => "Sophos XG Disk",
+    shortname => "Sophos XG Memory",
     usage => "",
     extra => $extra_doc_output
 );
