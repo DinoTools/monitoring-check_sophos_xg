@@ -47,6 +47,14 @@ Check if a license has been expired or will expire soon.
 
 Check memory and swap space.
 
+### check_sophos_xg_service.pl
+
+Check the state of the services running on the device.
+
+### check_sophos_xg_vpn.pl
+
+Check Site-to-Site vpn tunnels and active connections.
+
 Installation
 ------------
 
