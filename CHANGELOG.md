@@ -1,6 +1,13 @@
 Changelog
 =========
 
+0.3 (2022-11-17)
+----------------
+
+- Add new checks
+  - service - To check the state of the services
+  - vpn - To check Site-to-Site VPN connections
+
 0.2 (2022-10-10)
 ----------------
 
