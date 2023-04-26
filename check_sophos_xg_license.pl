@@ -175,7 +175,7 @@ foreach my $name (@licenses_included) {
     push(@licenses_to_check, $name);
 }
 
-#Open SNMP v3 Session 
+#Open SNMP v3 Session
 =begin comment
 my ($session, $error) = Net::SNMP->session(
     -hostname => $mp->opts->hostname,

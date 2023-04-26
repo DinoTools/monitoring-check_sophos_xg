@@ -113,7 +113,7 @@ $mp->add_arg(
 
 $mp->getopts;
 
-#Open SNMP v3 Session 
+#Open SNMP v3 Session
 =begin comment
 my ($session, $error) = Net::SNMP->session(
     -hostname => $mp->opts->hostname,
