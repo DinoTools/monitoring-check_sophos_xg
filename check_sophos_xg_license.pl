@@ -81,37 +81,36 @@ $mp->add_arg(
 );
 
 $mp->add_arg(
-    spec => 'hostname|H=s',
-    help => 'Hostname or IP of the device with SNMP access enabled',
+    spec     => 'hostname|H=s',
+    help     => 'Hostname or IP of the device with SNMP access enabled',
     required => 1
 );
 
 $mp->add_arg(
-    spec     => 'username|u=s',
-    help     => 'security name',
-    # required => 1
+    spec => 'username|u=s',
+    help => 'Username for SNMPv3',
 );
 
 $mp->add_arg(
-    spec     => 'authprotocol|a=s',
-    help     => 'Authentication protocol (MD5|SHA|SHA-224|SHA-256|SHA-384|SHA-512)',
-    # required => 1
+    spec => 'authpassword|A=s',
+    help => 'Authentication protocol password',
 );
 
 $mp->add_arg(
-    spec     => 'authpassphrase|A=s',
-    help     => 'Authentication protocol pass phrase',
-    # required => 1
+    spec    => 'authprotocol|a=s',
+    help    => 'Authentication protocol: MD5, SHA, SHA-224, SHA-256, SHA-384, SHA-512 (Default: MD5)',
+    default => 'md5',
 );
 
 $mp->add_arg(
-    spec     => 'privprotocol|x=s',
-    help     => 'Privacy protocol (DES|AES)',
+    spec => 'privpassword|X=s',
+    help => 'privacy protocol password',
 );
 
 $mp->add_arg(
-    spec     => 'privpassphrase|X=s',
-    help     => 'privacy protocol pass phrase',
+    spec    => 'privprotocol|x=s',
+    help    => 'Privacy protocol: DES, AES (Default: DES)',
+    default => 'des',
 );
 
 $mp->add_arg(
@@ -147,6 +146,12 @@ $mp->add_arg(
     default => ['subscribed'],
 );
 
+$mp->add_arg(
+    spec    => 'verbose',
+    help    => 'Print verbose/debug information',
+    default => 0,
+);
+
 $mp->getopts;
 
 my @licenses_included;
@@ -175,25 +180,39 @@ foreach my $name (@licenses_included) {
     push(@licenses_to_check, $name);
 }
 
-#Open SNMP v3 Session
-=begin comment
-my ($session, $error) = Net::SNMP->session(
-    -hostname => $mp->opts->hostname,
-    -version => 'snmpv3',
-    -username => $mp->opts->username,
-    -authprotocol => $mp->opts->authprotocol,
-    -authpassword => $mp->opts->authpassphrase,
-    -privprotocol => $mp->opts->privprotocol,
-    -privpassword => $mp->opts->privpassphrase,
-);
-=cut
-
-#Open SNMP Session
-my ($session, $error) = Net::SNMP->session(
-    -hostname => $mp->opts->hostname,
-    -version => 'snmpv2c',
-    -community => $mp->opts->community,
-);
+my ($session, $error);
+if (defined($mp->opts->username) && defined($mp->opts->authpassword)) {
+    # SNMPv3 login
+    verb('SNMPv3 login');
+    if (!defined($mp->opts->privpassword)) {
+        verb('SNMPv3 AuthNoPriv login : %s, %s', $mp->opts->username, $mp->opts->authprotocol);
+        ($session, $error) = Net::SNMP->session(
+            -hostname => $mp->opts->hostname,
+            -version => 'snmpv3',
+            -username => $mp->opts->username,
+            -authprotocol => $mp->opts->authprotocol,
+            -authpassword => $mp->opts->authpassword,
+        );
+    } else {
+        verb('SNMPv3 AuthPriv login : %s, %s, %s', ${mp->opts->username}, ${mp->opts->authprotocol}, ${mp->opts->privprotocol});
+        ($session, $error) = Net::SNMP->session(
+            -hostname => $mp->opts->hostname,
+            -version => 'snmpv3',
+            -username => $mp->opts->username,
+            -authprotocol => $mp->opts->authprotocol,
+            -authpassword => $mp->opts->authpassword,
+            -privprotocol => $mp->opts->privprotocol,
+            -privpassword => $mp->opts->privpassword,
+        );
+    }
+} else {
+  verb('SNMP v2c login');
+  ($session, $error) = Net::SNMP->session(
+      -hostname => $mp->opts->hostname,
+      -version => 'snmpv2c',
+      -community => $mp->opts->community,
+  );
+}
 
 if (!defined($session)) {
     wrap_exit(UNKNOWN, $error)
@@ -432,6 +451,14 @@ sub parse_expire_date
         $date{'mday'} = $2;
     }
     return \%date;
+}
+
+sub verb
+{
+    my $t = shift;
+    if ($mp->opts->verbose) {
+      printf($t . "\n", @_);
+    }
 }
 
 sub wrap_exit
