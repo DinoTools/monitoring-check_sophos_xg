@@ -132,7 +132,7 @@ if (defined($mp->opts->username) && defined($mp->opts->authpassword)) {
             -authpassword => $mp->opts->authpassword,
         );
     } else {
-        verb('SNMPv3 AuthPriv login : %s, %s, %s', ${mp->opts->username}, ${mp->opts->authprotocol}, ${mp->opts->privprotocol});
+        verb('SNMPv3 AuthPriv login : %s, %s, %s', $mp->opts->username, $mp->opts->authprotocol, $mp->opts->privprotocol);
         ($session, $error) = Net::SNMP->session(
             -hostname => $mp->opts->hostname,
             -version => 'snmpv3',
