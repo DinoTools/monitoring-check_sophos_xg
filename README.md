@@ -35,6 +35,10 @@ Plugins
 
 Check disk space.
 
+### check_sophos_xg_ha.pl
+
+Check the HA mode and the current status.
+
 ### check_sophos_xg_info.pl
 
 Just some details about the device.
