@@ -79,6 +79,9 @@ Check the state of the services running on the device.
 
 ### check_sophos_xg_vpn.pl
 
+> **Warning**
+> This plugin might NOT work as expected. Some devices seem to report wrong values or at least value we do not expect from the documentation. If someone finds a way to fix it. Please open a PR.
+
 Check Site-to-Site vpn tunnels and active connections.
 
 Installation
