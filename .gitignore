@@ -1,6 +1,11 @@
 # SPDX-FileCopyrightText: none
 # SPDX-License-Identifier: CC0-1.0
 
+# Docs
+/docs/commands/*.md
+/venv/
+/site/
+
 !Build/
 .last_cover_stats
 /META.yml
@@ -31,7 +36,6 @@ inc/
 /blib/
 /_eumm/
 /*.gz
-/Makefile
 /Makefile.old
 /MANIFEST.bak
 /pm_to_blib
