@@ -1,6 +1,28 @@
 check_sophos_xg_*
 =================
 
+<p align="center">
+  <a href="https://github.com/dinotools/monitoring-check_sophos_xg/issues">
+    <img alt="GitHub issues" src="https://img.shields.io/github/issues/dinotools/monitoring-check_sophos_xg">
+  </a>
+  <a href="https://github.com/dinotools/monitoring-check_sophos_xg/network">
+    <img alt="GitHub forks" src="https://img.shields.io/github/forks/dinotools/monitoring-check_sophos_xg">
+  </a>
+  <a href="https://github.com/dinotools/monitoring-check_sophos_xg/stargazers">
+    <img alt="GitHub stars" src="https://img.shields.io/github/stars/dinotools/monitoring-check_sophos_xg">
+  </a>
+  <a href="https://github.com/DinoTools/monitoring-check_sophos_xg/blob/main/LICENSE.md">
+    <img alt="GitHub license" src="https://img.shields.io/github/license/dinotools/monitoring-check_sophos_xg">
+  </a>
+  <a href="https://dinotools.github.io/monitoring-check_sophos_xg">
+    <img alt="Documentation" src="https://github.com/DinoTools/monitoring-check_sophos_xg/actions/workflows/pages.yml/badge.svg">
+  </a>
+  <a href="https://exchange.icinga.com/dinotools/check_sophos_xg">
+    <img alt="Icinga Exchange" src="https://img.shields.io/badge/Icinga-Exchange-success">
+  </a>
+</p>
+
+
 A collection of monitoring plugins to check [Sophos](https://www.sophos.com/) XG firewalls with [Icinga](https://icinga.com/), [Nagios](https://www.nagios.org/) and other compatible monitoring solutions.
 
 Compatible devices
@@ -67,6 +89,11 @@ Just copy the files `check_sophos_xg_*.pl` to your Icinga or Nagios plugin direc
 Examples
 --------
 
+
+Documentation
+-------------
+
+- Documentation: https://dinotools.github.io/monitoring-check_sophos_xg
 
 Source
 ------

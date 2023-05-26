@@ -1,0 +1,33 @@
+# SPDX-FileCopyrightText: none
+# SPDX-License-Identifier: CC0-1.0
+
+site_name: check_sophos_xg
+site_description: Monitoring plugin to check Sophos XG devices
+site_url: https://dinotools.github.io/monitoring-check_sophos_xg/
+
+repo_name: DinoTools/monitoring-check_sophos_xg
+repo_url: https://github.com/DinoTools/monitoring-check_sophos_xg
+edit_uri: blob/main/docs/
+
+nav:
+    - Home: index.md
+    - License: LICENSE.md
+    - Issue Tracker: https://github.com/DinoTools/monitoring-check_sophos_xg/issues
+    - Git Repo: https://github.com/DinoTools/monitoring-check_sophos_xg
+    - ... | commands/*.md
+
+docs_dir: docs
+
+theme:
+    name: material
+    # Don't load external fonts
+    font: false
+    icon:
+        repo: fontawesome/brands/github
+
+markdown_extensions:
+    - attr_list
+
+plugins:
+    - awesome-pages
+    - search

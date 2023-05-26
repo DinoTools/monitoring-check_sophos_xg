@@ -1,0 +1,33 @@
+# SPDX-FileCopyrightText: none
+# SPDX-License-Identifier: CC0-1.0
+
+name: docs
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.x
+
+      - name: Update package cache
+        run: sudo apt-get update
+
+      - name: Install required packages
+        run: sudo apt-get install --no-install-recommends make perl libmonitoring-plugin-perl libnet-snmp-perl libdate-calc-perl
+
+      - name: Install Python packages
+        run: pip install -r docs/requirements.txt
+
+      - name: Build documentation
+        run: make docs
