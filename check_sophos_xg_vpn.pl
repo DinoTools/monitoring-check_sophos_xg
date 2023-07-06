@@ -122,6 +122,12 @@ $mp->add_arg(
     default => 0,
 );
 
+$mp->add_arg(
+    spec    => 'name=s',
+    help    => 'Name of the VPN tunnel',
+    required => 1,
+);
+
 $mp->getopts;
 
 my ($session, $error);
