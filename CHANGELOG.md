@@ -1,6 +1,14 @@
 Changelog
 =========
 
+0.4.1 (2023-10-18)
+------------------
+
+- Remove checks
+  - vpn - We get wrong or unexpected values from the device.
+- Fix checks
+  - ha - Fix issue not detecting some HA failures
+
 0.4 (2023-05-26)
 ----------------
 
