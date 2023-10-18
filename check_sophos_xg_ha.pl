@@ -216,8 +216,10 @@ sub check
         $HaState{$result->{$sfosDevicePeerHAState}}
     );
 
-    if ($result->{$sfosDeviceCurrentHAState} == 3 or $result->{$sfosDevicePeerHAState}) {
+    if ($result->{$sfosDeviceCurrentHAState} == 3 or $result->{$sfosDevicePeerHAState} == 3) {
         $mp->add_message(OK, $message);
+    } elsif ($result->{$sfosDeviceCurrentHAState} == 2) {
+        $mp->add_message(WARNING, 'No primary peer found, but running in standalone mode: ' . $message);
     } else {
         $mp->add_message(CRITICAL, 'No primary peer found: ' . $message);
     }
