@@ -111,6 +111,13 @@ $mp->add_arg(
     default => [],
 );
 
+$mp->add_arg(
+    spec    => 'warning-is-critical',
+    help    => 'The plugin reports all WARNING states as CRITICAL. Use it if everything not OK should be reported as CRITICAL. If the device does not respond to SNMP requests the check will still report UNKOWN.',
+    default => 0,
+
+);
+
 $mp->getopts;
 
 
@@ -164,6 +171,7 @@ sub check
     my $sfosDevicePeerHAState    = $sfosXGHAStats . '.5.0';
     my $sfosDeviceHAConfigMode   = $sfosXGHAStats . '.6.0';
     my $sfosDeviceLoadBalancing  = $sfosXGHAStats . '.7.0';
+    my $warning_or_critical      = ($mp->opts->{'warning-is-critical'}) ? CRITICAL : WARNING;
 
     my %HaStatusType = (
         0 => 'disabled',
@@ -199,7 +207,7 @@ sub check
     }
 
     if ($result->{$sfosHAStatus} != 1) {
-        my $state = WARNING;
+        my $state = $warning_or_critical;
         my $message = 'HA is disabled but it should be enabled';
         if ($mp->opts->{'disabled-ok'}) {
             # Exit with OK if a disabled HA mode is OK
@@ -219,7 +227,7 @@ sub check
     if ($result->{$sfosDeviceCurrentHAState} == 3 or $result->{$sfosDevicePeerHAState} == 3) {
         $mp->add_message(OK, $message);
     } elsif ($result->{$sfosDeviceCurrentHAState} == 2) {
-        $mp->add_message(WARNING, 'No primary peer found, but running in standalone mode: ' . $message);
+        $mp->add_message($warning_or_critical, 'No primary peer found, but running in standalone mode: ' . $message);
     } else {
         $mp->add_message(CRITICAL, 'No primary peer found: ' . $message);
     }
@@ -227,7 +235,7 @@ sub check
     if(@{$mp->opts->{'expected-mode'}} > 0) {
         if (!grep(/^$result->{$sfosDeviceHAConfigMode}$/, @{$mp->opts->{'expected-mode'}})) {
             $mp->add_message(
-                WARNING,
+                $warning_or_critical,
                 sprintf(
                     'Mode is "%s" but expected "%s"',
                     $result->{$sfosDeviceHAConfigMode},
