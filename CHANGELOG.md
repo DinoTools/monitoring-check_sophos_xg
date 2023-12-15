@@ -1,6 +1,12 @@
 Changelog
 =========
 
+0.4.2 (2023-12-15)
+------------------
+
+- Update checks
+  - ha - Add option to report all WARNING states as CRITICAL
+
 0.4.1 (2023-10-18)
 ------------------
 
