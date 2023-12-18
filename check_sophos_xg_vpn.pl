@@ -16,6 +16,17 @@ use constant UNKNOWN  => 3;
 
 use constant VERSION => '';
 
+my %IPSecVPNConnectionStatus = (
+    0 => 'inactive',
+    1 => 'active',
+    2 => 'partially-active',
+);
+
+my %IPSecVPNActivationStatus = (
+    0 => 'inactive',
+    1 => 'active',
+);
+
 my $pkg_monitoring_available = 0;
 BEGIN {
     my $pkg_nagios_available = 0;
@@ -43,6 +54,19 @@ BEGIN {
 my @g_long_message;
 my $parser = Pod::Text::Termcap->new (sentence => 0, width => 78);
 my $extra_doc = <<'END_MESSAGE';
+=pod
+
+=head1 Requirements
+
+The required information where introduced in Sophos XG v20.0
+
+=head1 Connection state
+
+This check plugin uses the information from the documentation [0] to report the
+status of the Site-to-Site VPN connection.
+
+[0] https://doc.sophos.com/nsg/sophos-firewall/20.0/help/en-us/webhelp/onlinehelp/AdministratorHelp/SiteToSiteVPN/IPsec/index.html#connection-status
+=cut
 END_MESSAGE
 
 my $extra_doc_output;
@@ -51,7 +75,7 @@ $parser->parse_string_document($extra_doc);
 
 my $mp = Monitoring::Plugin->new(
     shortname => 'Sophos XG Site-to-Site VPN',
-    usage => '',
+    usage => 'This check plugin checks the current the of a Site-to-Site VPN connection',
     version => VERSION,
     extra => $extra_doc_output,
 );
@@ -101,18 +125,8 @@ $mp->add_arg(
 );
 
 $mp->add_arg(
-    spec => 'warning=s',
-    help => 'Number of vpn connections',
-);
-
-$mp->add_arg(
-    spec => 'critical=s',
-    help => 'Number of vpn connections',
-);
-
-$mp->add_arg(
-    spec    => 'use-threshold',
-    help    => 'Use threshold instead of exect match',
+    spec    => 'inactive-ok',
+    help    => 'If it is OK if the activation state of the IPSec tunnel is inactive.',
     default => 0,
 );
 
@@ -171,7 +185,8 @@ sub check
 {
     my $sfosIPSecVpnTunnelEntry = '.1.3.6.1.4.1.2604.5.1.6.1.1.1.1';
     my $sfosIPSecVpnConnName     = $sfosIPSecVpnTunnelEntry . '.2';
-    my $sfosIPSecVpnActiveTunnel = $sfosIPSecVpnTunnelEntry . '.8';
+    my $sfosIPSecVpnConnStatus   = $sfosIPSecVpnTunnelEntry . '.9';
+    my $sfosIPSecVpnActivated    = $sfosIPSecVpnTunnelEntry . '.10';
 
     my $result = $session->get_table(
         -baseoid => $sfosIPSecVpnTunnelEntry
@@ -183,63 +198,79 @@ sub check
 
     my $vpn_found = 0;
     foreach my $key (keys %$result) {
+        my $vpn_connection_id = undef;
         if (
             $key =~ /^$sfosIPSecVpnConnName\.(\d+)$/ &&
             $result->{"${sfosIPSecVpnConnName}.${1}"} eq $mp->opts->name
         ) {
-            my $vpn_name = $result->{"${sfosIPSecVpnConnName}.${1}"};
-            my $vpn_connections = $result->{"${sfosIPSecVpnActiveTunnel}.${1}"};
             $vpn_found = 1;
+            $vpn_connection_id = $1;
+        } else {
+            next;
+        }
+        my $vpn_name = $result->{"${sfosIPSecVpnConnName}.${vpn_connection_id}"};
+        my $vpn_connection_name = $result->{"${sfosIPSecVpnConnName}.${vpn_connection_id}"};
+        my $vpn_connection_status = $result->{"${sfosIPSecVpnConnStatus}.${vpn_connection_id}"};
+        my $vpn_activated = $result->{"${sfosIPSecVpnActivated}.${vpn_connection_id}"};
 
-            my $check_state = OK;
-            if ($mp->opts->{'use-threshold'}) {
-                my $threshold = Monitoring::Plugin::Threshold->set_thresholds(
-                    warning  => $mp->opts->warning,
-                    critical => $mp->opts->critical,
+        if ($vpn_activated == 1) {
+            if ($vpn_connection_status == 0) {
+                $mp->add_message(
+                    CRITICAL,
+                    sprintf(
+                        'Connection \'%s\' is active, but tunnel isn\'t established.',
+                        $vpn_connection_name,
+                    )
                 );
-                $check_state = $threshold->get_status($vpn_connections);
+            } elsif ($vpn_connection_status == 1) {
+                $mp->add_message(
+                    OK,
+                    sprintf(
+                        'Connection \'%s\' is active and tunnels are established.',
+                        $vpn_connection_name,
+                    )
+                );
+            } elsif ($vpn_connection_status == 2) {
+                $mp->add_message(
+                    WARNING,
+                    sprintf(
+                        'Connection \'%s\' is active, but at least one tunnel isn\'t established.',
+                        $vpn_connection_name,
+                    )
+                );
             } else {
-                if ($mp->opts->warning && $mp->opts->warning != $vpn_connections) {
-                    $check_state = WARNING;
-                }
-                if ($mp->opts->critical && $mp->opts->critical != $vpn_connections) {
-                    $check_state = CRITICAL;
-                }
-            }
-
-            $mp->add_perfdata(
-                label    => sprintf(
-                    '%s_active_connections',
-                    $vpn_name,
-                ),
-                value    => $vpn_connections,
-                warning  => $mp->opts->warning,
-                critical => $mp->opts->critical,
-            );
-
-            my $extra_info = '';
-            if ($check_state != OK) {
-                $extra_info = sprintf(
-                    '(Limit: %s)',
-                    ($check_state == WARNING) ? $mp->opts->warning : $mp->opts->critical
+                $mp->add_message(
+                    UNKNOWN,
+                    sprintf(
+                        'Connection \'%s\' is active, but an unknown status code has been reported by the devices.',
+                        $vpn_connection_name,
+                    )
                 );
             }
+        } elsif ($mp->opts->{'inactive-ok'}) {
             $mp->add_message(
-                $check_state,
+                CRITICAL,
                 sprintf(
-                    '%s active connections %d %s',
-                    $vpn_name,
-                    $vpn_connections,
-                    $extra_info,
+                    'Connection \'%s\' is not active, but this is ok.',
+                    $vpn_connection_name,
+                )
+            );
+        } else {
+            $mp->add_message(
+                CRITICAL,
+                sprintf(
+                    'Connection \'%s\' is not active',
+                    $vpn_connection_name,
                 )
             );
         }
+
     }
     if ($vpn_found == 0) {
         wrap_exit(
             UNKNOWN,
             sprintf(
-                'Tunnel \'%s\' not found',
+                'Connection \'%s\' not found',
                 $mp->opts->name,
             )
         );
