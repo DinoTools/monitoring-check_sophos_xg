@@ -80,11 +80,9 @@ Check the state of the services running on the device.
 ### check_sophos_xg_vpn.pl
 
 > **Warning**
-> This plugin might NOT work as expected. Some devices seem to report wrong values or at least values we do not expect from the documentation. If someone finds a way to fix it. Please open a PR.
->
-> The plugin has been removed in version 0.4.1. If you wants to fix it please feel free to have a look at the git repository.
+> This plugin requires at least Sophos XG v20.0
 
-Check Site-to-Site vpn tunnels and active connections.
+Check Site-to-Site vpn connections.
 
 Installation
 ------------
