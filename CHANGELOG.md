@@ -1,6 +1,12 @@
 Changelog
 =========
 
+0.5 (2023-12-18)
+----------------
+
+- Add new check
+  - vpn - Add check to report IPSec Site-to-Site vpn connection status
+
 0.4.2 (2023-12-15)
 ------------------
 
