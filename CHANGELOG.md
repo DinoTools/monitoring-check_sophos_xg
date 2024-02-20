@@ -4,6 +4,9 @@ Changelog
 0.x (next)
 ----------
 
+0.6 (2024-02-20)
+----------------
+
 - Update check
   - vpn - Add HA option and allow multiple vpn connections
 
