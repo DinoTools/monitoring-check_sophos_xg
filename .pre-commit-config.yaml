@@ -37,3 +37,11 @@ repos:
     rev: v3.0.1
     hooks:
       - id: reuse
+
+ci:
+  autofix_commit_msg: |
+    * - auto fixes from pre-commit hooks
+
+    for more information, see https://pre-commit.ci
+  autofix_prs: false
+  autoupdate_commit_msg: 'ci - pre-commit autoupdate'
