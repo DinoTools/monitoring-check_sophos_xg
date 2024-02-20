@@ -120,13 +120,19 @@ $mp->add_arg(
 );
 
 $mp->add_arg(
-    spec    => 'name=s',
+    spec    => 'name=s@',
     help    => 'Name of the VPN tunnel',
 );
 
 $mp->add_arg(
     spec    => 'inactive-ok',
     help    => 'If it is OK if the activation state of the IPSec tunnel is inactive.',
+    default => 0,
+);
+
+$mp->add_arg(
+    spec    => 'ha',
+    help    => 'Check connections in HA mode.',
     default => 0,
 );
 
@@ -196,82 +202,122 @@ sub check
         wrap_exit(UNKNOWN, 'Unable to get information');
     }
 
-    my $vpn_found = 0;
+    my %vpn_connections = ();
     foreach my $key (keys %$result) {
-        my $vpn_connection_id = undef;
-        if (
-            $key =~ /^$sfosIPSecVpnConnName\.(\d+)$/ &&
-            $result->{"${sfosIPSecVpnConnName}.${1}"} eq $mp->opts->name
-        ) {
-            $vpn_found = 1;
-            $vpn_connection_id = $1;
-        } else {
-            next;
+        if ($key =~ /^$sfosIPSecVpnConnName\.(\d+)$/) {
+            my $vpn_connection_id = $1;
+            my $vpn_name = $result->{"${sfosIPSecVpnConnName}.${vpn_connection_id}"};
+            $vpn_connections{$vpn_name} = {
+                name => $vpn_name,
+                activated => $result->{"${sfosIPSecVpnActivated}.${vpn_connection_id}"},
+                status => $result->{"${sfosIPSecVpnConnStatus}.${vpn_connection_id}"}
+            };
         }
-        my $vpn_name = $result->{"${sfosIPSecVpnConnName}.${vpn_connection_id}"};
-        my $vpn_connection_name = $result->{"${sfosIPSecVpnConnName}.${vpn_connection_id}"};
-        my $vpn_connection_status = $result->{"${sfosIPSecVpnConnStatus}.${vpn_connection_id}"};
-        my $vpn_activated = $result->{"${sfosIPSecVpnActivated}.${vpn_connection_id}"};
-
-        if ($vpn_activated == 1) {
-            if ($vpn_connection_status == 0) {
-                $mp->add_message(
-                    CRITICAL,
-                    sprintf(
-                        'Connection \'%s\' is active, but tunnel isn\'t established.',
-                        $vpn_connection_name,
-                    )
-                );
-            } elsif ($vpn_connection_status == 1) {
-                $mp->add_message(
-                    OK,
-                    sprintf(
-                        'Connection \'%s\' is active and tunnels are established.',
-                        $vpn_connection_name,
-                    )
-                );
-            } elsif ($vpn_connection_status == 2) {
-                $mp->add_message(
-                    WARNING,
-                    sprintf(
-                        'Connection \'%s\' is active, but at least one tunnel isn\'t established.',
-                        $vpn_connection_name,
-                    )
-                );
-            } else {
-                $mp->add_message(
-                    UNKNOWN,
-                    sprintf(
-                        'Connection \'%s\' is active, but an unknown status code has been reported by the devices.',
-                        $vpn_connection_name,
-                    )
-                );
-            }
-        } elsif ($mp->opts->{'inactive-ok'}) {
-            $mp->add_message(
-                CRITICAL,
-                sprintf(
-                    'Connection \'%s\' is not active, but this is ok.',
-                    $vpn_connection_name,
-                )
-            );
-        } else {
-            $mp->add_message(
-                CRITICAL,
-                sprintf(
-                    'Connection \'%s\' is not active',
-                    $vpn_connection_name,
-                )
-            );
-        }
-
     }
-    if ($vpn_found == 0) {
-        wrap_exit(
-            UNKNOWN,
+
+    my $vpn_connection_ha_activate = undef;
+
+    foreach my $name (@{$mp->opts->name}) {
+        my $vpn_found = 0;
+        foreach my $vpn_name (keys %vpn_connections) {
+            if ($name ne $vpn_name) {
+                next;
+            }
+            $vpn_found = 1;
+            my $vpn_connection = $vpn_connections{$vpn_name};
+            if ($mp->opts->ha) {
+                if ($vpn_connection->{activated} == 1) {
+                    if(defined $vpn_connection_ha_activate) {
+                        wrap_exit(
+                            UNKNOWN,
+                            sprintf(
+                                'Only one active connection is allowed in HA mode. Active connections: \'%s\' and \'%s\'',
+                                $vpn_connection_ha_activate->{name},
+                                $name,
+                            )
+                        );
+                    }
+                    $vpn_connection_ha_activate = $vpn_connection;
+                }
+            } else {
+                check_single_connection($vpn_connection);
+            }
+        }
+        if ($vpn_found == 0) {
+            wrap_exit(
+                UNKNOWN,
+                sprintf(
+                    'Connection \'%s\' not found',
+                    $name,
+                )
+            );
+        }
+    }
+    if ($mp->opts->ha) {
+        if(defined $vpn_connection_ha_activate) {
+            check_single_connection($vpn_connection_ha_activate);
+        } else {
+            $mp->add_message(
+                CRITICAL,
+                'No active connection in HA group found.'
+            );
+        }
+    }
+}
+
+sub check_single_connection
+{
+    my $vpn_connection = shift;
+    if ($vpn_connection->{activated} == 1) {
+        if ($vpn_connection->{status} == 0) {
+            $mp->add_message(
+                CRITICAL,
+                sprintf(
+                    'Connection \'%s\' is active, but tunnel isn\'t established.',
+                    $vpn_connection->{name},
+                )
+            );
+        } elsif ($vpn_connection->{status} == 1) {
+            $mp->add_message(
+                OK,
+                sprintf(
+                    'Connection \'%s\' is active and tunnels are established.',
+                    $vpn_connection->{name},
+                )
+            );
+        } elsif ($vpn_connection->{status} == 2) {
+            $mp->add_message(
+                WARNING,
+                sprintf(
+                    'Connection \'%s\' is active, but at least one tunnel isn\'t established.',
+                    $vpn_connection->{name},
+                )
+            );
+        } else {
+            $mp->add_message(
+                UNKNOWN,
+                sprintf(
+                    'Connection \'%s\' is active, but an unknown status code has been reported by the devices.',
+                    $vpn_connection->{name},
+                )
+            );
+
+        }
+
+    } elsif ($mp->opts->{'inactive-ok'}) {
+        $mp->add_message(
+            OK,
             sprintf(
-                'Connection \'%s\' not found',
-                $mp->opts->name,
+                'Connection \'%s\' is not active, but this is ok.',
+                $vpn_connection->{name},
+            )
+        );
+    } else {
+        $mp->add_message(
+            CRITICAL,
+            sprintf(
+                'Connection \'%s\' is not active',
+                $vpn_connection->{name},
             )
         );
     }

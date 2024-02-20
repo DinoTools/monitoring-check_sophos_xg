@@ -1,6 +1,12 @@
 Changelog
 =========
 
+0.x (next)
+----------
+
+- Update check
+  - vpn - Add HA option and allow multiple vpn connections
+
 0.5 (2023-12-18)
 ----------------
 
